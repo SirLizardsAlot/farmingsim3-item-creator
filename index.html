@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DiamondFire Item Creator</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 1em; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 5px; margin-top: 5px; }
+    #output { margin-top: 20px; white-space: pre-wrap; background: #f4f4f4; padding: 10px; border: 1px solid #ccc; }
+    .group { display: none; }
+    button { margin-top: 10px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>DiamondFire Item Creator</h1>
+
+  <label>Item ID
+    <input id="item" type="text" placeholder="e.g., DIAMOND_SWORD" />
+  </label>
+
+  <label>Item Name
+    <input id="name" type="text" placeholder="e.g., Epic Sword" />
+  </label>
+
+  <label>Item Type
+    <select id="itemType">
+      <option value="general">General</option>
+      <option value="tool">Tool</option>
+      <option value="armor">Armor</option>
+      <option value="pet">Pet</option>
+    </select>
+  </label>
+
+  <label>Tier (int)
+    <input id="tier" type="number" />
+  </label>
+
+  <label>Description (str, adds &7)
+    <input id="desc" type="text" />
+  </label>
+
+  <div class="group" id="toolFields">
+    <label>Harvest (bypass)
+      <input id="harvest" type="text" />
+    </label>
+    <label>Value Multiplier (bypass)
+      <input id="value_multi" type="text" />
+    </label>
+    <label>Power (int)
+      <input id="power" type="number" />
+    </label>
+    <label>Tool Type (hoe, axe, mace, adds &7)
+      <input id="tool_type" type="text" />
+    </label>
+  </div>
+
+  <div class="group" id="armorFields">
+    <label>Equip Slot (1-5)
+      <input id="equip_slot" type="number" />
+    </label>
+    <label>Equip Harvest % (bypass)
+      <input id="equipmulti_harvest" type="text" />
+    </label>
+    <label>Equip Value Multi % (bypass)
+      <input id="equipmulti_value_multi" type="text" />
+    </label>
+    <label>Equip Walkspeed % (bypass)
+      <input id="equipmulti_walkspeed" type="text" />
+    </label>
+    <label>Equip Harvest x (bypass)
+      <input id="equipmulti2_harvest" type="text" />
+    </label>
+    <label>Equip Value Multi x (bypass)
+      <input id="equipmulti2_value_multi" type="text" />
+    </label>
+  </div>
+
+  <div class="group" id="petFields">
+    <label>Pet (always 1)
+      <input id="pet" type="number" value="1" />
+    </label>
+    <label>Harvest % (bypass)
+      <input id="petmulti_harvest" type="text" />
+    </label>
+    <label>Value Multi % (bypass)
+      <input id="petmulti_value_multi" type="text" />
+    </label>
+    <label>Harvest x (bypass)
+      <input id="petmulti2_harvest" type="text" />
+    </label>
+    <label>Value Multi x (bypass)
+      <input id="petmulti2_value_multi" type="text" />
+    </label>
+    <label>Essence % (bypass)
+      <input id="petmulti_essence" type="text" />
+    </label>
+    <label>Star % (bypass)
+      <input id="petmulti_star" type="text" />
+    </label>
+  </div>
+
+  <button onclick="generateCommand()">Generate Command</button>
+  <button onclick="copyCommand()">Copy to Clipboard</button>
+
+  <div id="output"></div>
+
+  <script>
+    const itemType = document.getElementById('itemType');
+    const groups = {
+      tool: document.getElementById('toolFields'),
+      armor: document.getElementById('armorFields'),
+      pet: document.getElementById('petFields'),
+    };
+
+    itemType.addEventListener('change', () => {
+      Object.values(groups).forEach(g => g.style.display = 'none');
+      const type = itemType.value;
+      if (groups[type]) groups[type].style.display = 'block';
+    });
+
+    function generateCommand() {
+      const item = document.getElementById('item').value.trim();
+      const name = document.getElementById('name').value.trim();
+      const tier = document.getElementById('tier').value;
+      const desc = document.getElementById('desc').value.trim();
+
+      let tags = [`tier:${tier}`, `desc:&7${desc}`];
+      const type = itemType.value;
+
+      if (type === 'tool') {
+        tags.push(`harvest:${getVal('harvest')}`);
+        tags.push(`value_multi:${getVal('value_multi')}`);
+        tags.push(`power:${getVal('power')}`);
+        tags.push(`tool_type:&7${getVal('tool_type')}`);
+      }
+      if (type === 'armor') {
+        ['equip_slot','equipmulti_harvest','equipmulti_value_multi','equipmulti_walkspeed','equipmulti2_harvest','equipmulti2_value_multi']
+          .forEach(id => tags.push(`${id}:${getVal(id)}`));
+      }
+      if (type === 'pet') {
+        tags.push(`pet:${getVal('pet')}`);
+        ['petmulti_harvest','petmulti_value_multi','petmulti2_harvest','petmulti2_value_multi','petmulti_essence','petmulti_star']
+          .forEach(id => tags.push(`${id}:${getVal(id)}`));
+      }
+
+      const cmd = `@createitem ${item} ${name} ${tags.join(',')}`;
+      document.getElementById('output').textContent = cmd;
+    }
+
+    function getVal(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function copyCommand() {
+      const output = document.getElementById('output');
+      navigator.clipboard.writeText(output.textContent).then(() => alert('Copied!'));
+    }
+  </script>
+</body>
+</html>
