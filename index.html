@@ -17,11 +17,11 @@
   <h1>DiamondFire Item Creator</h1>
 
   <label>Item ID
-    <input id="item" type="text" placeholder="e.g., DIAMOND_SWORD" />
+    <input id="item" type="text" placeholder="e.g., stone_pickaxe" />
   </label>
 
   <label>Item Name
-    <input id="name" type="text" placeholder="e.g., Epic Sword" />
+    <input id="name" type="text" placeholder="Name of the item" />
   </label>
 
   <label>Item Type
@@ -41,6 +41,25 @@
     <input id="desc" type="text" />
   </label>
 
+  <label>Rarity
+    <select id="rarity_text">
+      <option value="">-- Select Rarity --</option>
+      <option value="1">Common</option>
+      <option value="2">Uncommon</option>
+      <option value="3">Rare</option>
+      <option value="4">Epic</option>
+      <option value="5">Legendary</option>
+      <option value="6">Mythic</option>
+      <option value="7">Celestial</option>
+      <option value="8">Arcane</option>
+      <option value="9">Divine</option>
+      <option value="10">Relic</option>
+      <option value="11">Cosmic</option>
+      <option value="12">Secret</option>
+      <option value="13">Impossible</option>
+    </select>
+  </label>
+
   <div class="group" id="toolFields">
     <label>Harvest (bypass)
       <input id="harvest" type="text" />
@@ -51,14 +70,26 @@
     <label>Power (int)
       <input id="power" type="number" />
     </label>
-    <label>Tool Type (Hoe, Axe, Mace, adds &7)
-      <input id="tool_type" type="text" />
+    <label>Tool Type (adds &7)
+      <select id="tool_type">
+        <option value="">-- Select Tool Type --</option>
+        <option value="hoe">Hoe</option>
+        <option value="axe">Axe</option>
+        <option value="mace">Mace</option>
+      </select>
     </label>
   </div>
 
   <div class="group" id="armorFields">
-    <label>Equip Slot (1-5)
-      <input id="equip_slot" type="number" />
+    <label>Equip Slot
+      <select id="equip_slot">
+        <option value="">-- Select Slot --</option>
+        <option value="1">Feet</option>
+        <option value="2">Legs</option>
+        <option value="3">Chest</option>
+        <option value="4">Head</option>
+        <option value="5">Offhand</option>
+      </select>
     </label>
     <label>Equip Harvest % (bypass)
       <input id="equipmulti_harvest" type="text" />
@@ -78,9 +109,6 @@
   </div>
 
   <div class="group" id="petFields">
-    <label>Pet (always 1)
-      <input id="pet" type="number" value="1" />
-    </label>
     <label>Harvest % (bypass)
       <input id="petmulti_harvest" type="text" />
     </label>
@@ -121,36 +149,50 @@
     });
 
     function generateCommand() {
-      const item = document.getElementById('item').value.trim();
-      const name = document.getElementById('name').value.trim();
+      let item = document.getElementById('item').value.trim();
+      let name = document.getElementById('name').value.trim().replaceAll(' ', '_');
+
+      if (item === '') item = 'stone_pickaxe';
+      if (name === '') name = '<white>Custom_Item';
       const tier = document.getElementById('tier').value;
       const desc = document.getElementById('desc').value.trim();
+      const rarity = document.getElementById('rarity_text').value;
 
-      let tags = [`tier:${tier}`, `desc:&7${desc}`];
+      let tags = [];
+      if (tier !== '') tags.push(`tier:${tier}`);
+      if (desc !== '') tags.push(`desc:&8${desc}`);
+      if (rarity !== '') tags.push(`rarity_text:${rarity}`);
+
       const type = itemType.value;
 
       if (type === 'tool') {
-        tags.push(`harvest:${getVal('harvest')}`);
-        tags.push(`value_multi:${getVal('value_multi')}`);
-        tags.push(`power:${getVal('power')}`);
-        tags.push(`tool_type:&7${getVal('tool_type')}`);
+        addTag(tags, 'harvest');
+        addTag(tags, 'value_multi');
+        addTag(tags, 'power');
+        const tool_type = getVal('tool_type');
+        if (tool_type) tags.push(`tool_type:&7${tool_type.charAt(0).toUpperCase() + tool_type.slice(1)}`);
       }
       if (type === 'armor') {
         ['equip_slot','equipmulti_harvest','equipmulti_value_multi','equipmulti_walkspeed','equipmulti2_harvest','equipmulti2_value_multi']
-          .forEach(id => tags.push(`${id}:${getVal(id)}`));
+          .forEach(id => addTag(tags, id));
       }
       if (type === 'pet') {
-        tags.push(`pet:${getVal('pet')}`);
+        tags.push(`pet:1`);
         ['petmulti_harvest','petmulti_value_multi','petmulti2_harvest','petmulti2_value_multi','petmulti_essence','petmulti_star']
-          .forEach(id => tags.push(`${id}:${getVal(id)}`));
+          .forEach(id => addTag(tags, id));
       }
 
-      const cmd = `@createitem ${item} ${name} ${tags.join(',')}`;
+      const cmd = `@createitem ${item} ${name} ${tags.join('|')}`;
       document.getElementById('output').textContent = cmd;
     }
 
     function getVal(id) {
       return document.getElementById(id).value.trim();
+    }
+
+    function addTag(tags, id) {
+      const val = getVal(id);
+      if (val !== '') tags.push(`${id}:${val}`);
     }
 
     function copyCommand() {
